@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 /**
  * Pokemon API Service
  * This file contains functions for fetching and manipulating Pokemon data from the PokeAPI
@@ -29,7 +30,20 @@ async function fetchRandomPokemon() {
   // 8. Return the processed Pokemon data
   // 9. In the catch block, log the error and return null
 
-  // YOUR CODE HERE
+  try{
+    const randomId = Math.floor(Math.random() * TOTAL_POKEMON)+1;
+    const response = await fetch(`${API_BASE_URL}/pokemon/${randomId}`);
+
+    if(!response.ok){
+      throw new Error(`Failed to fetch Pokemon: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return processPokemonData(data);
+  } catch(error){
+    console.error('Error fetching random Pokemon:', error.message);
+    return null;
+  }
 
   // DEBUGGING TIP: Track the API request:
   // console.log(`Fetching Pokemon with ID: ${randomId}`);
@@ -61,7 +75,17 @@ async function fetchMultipleRandomPokemon(count) {
   // 5. Return the 'pokemonList'.
   // 6. In the catch block, log the error using console.error and return an empty array.
 
-  // YOUR CODE HERE
+  try{
+    const promises = [];
+    for(let i=0;i<count;i++){
+      promises.push(fetchRandomPokemon());
+    }
+    const pokemonList = await Promise.all(promises);
+    return pokemonList;
+  } catch(error){
+    console.error('Error fetching multiple Pokemon:', error.message);
+    return [];
+  }
 
   // DEBUGGING TIP:
   // - Before calling Promise.all,
@@ -93,7 +117,22 @@ function processPokemonData(data) {
   //    - stats: an object with hp, attack, defense and speed (use findStat)
   //    - speciesUrl: the URL to the Pokemon's species data
 
-  // YOUR CODE HERE
+  return {
+    id: data.id,
+    name: capitalizeFirstLetter(data.name),
+    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+    types: data.types.map(type => type.type.name),
+    height: data.height/10,
+    weight: data.weight/10,
+    abilities: data.abilities.map(ability => capitalizeFirstLetter(ability.ability.name)),
+    stats: {
+      hp: findStat(data.stats, 'hp'),
+      attack: findStat(data.stats, 'attack'),
+      defense: findStat(data.stats, 'defense'),
+      speed: findStat(data.stats, 'speed'),
+    },
+    speciesUrl: data.species.url,
+  };
 
   // DEBUGGING TIP: Log the raw vs processed data:
   // console.log('Raw Pokemon data structure:', {
@@ -125,7 +164,9 @@ function findStat(stats, statName) {
   // 1. Use the find method to locate the stat object with stat.name === statName
   // 2. Return the base_stat value if found or 0 if not found
 
-  // YOUR CODE HERE
+  const stat = stats.find(s => s.stat.name === statName);
+
+  return stat || 0;
 
   // DEBUGGING TIP: Trace the stat search:
   // console.log(`Looking for stat "${statName}" in:`, stats);
@@ -150,7 +191,7 @@ function capitalizeFirstLetter(string) {
   // 4. Get the rest of the string using slice(1)
   // 5. Combine and return the uppercase first letter with the rest of the string
 
-  // YOUR CODE HERE
+  return string.charAt(0).toUpperCase() + string.replace('-', ' ').slice(1);
 
   // DEBUGGING TIP: Track string transformation:
   // console.log(`Input string: "${string}"`);
@@ -165,7 +206,10 @@ function capitalizeFirstLetter(string) {
 // 1. Expose the Pokemon service functions through the window object
 // 2. Create a PokemonService object with fetchRandomPokemon and fetchMultipleRandomPokemon
 
-// YOUR CODE HERE
+window.PokemonService = {
+  fetchRandomPokemon,
+  fetchMultipleRandomPokemon
+};
 
 // DEBUGGING TIP: Verify the global export:
 // console.log('PokemonService exposed to window:', !!window.PokemonService);
